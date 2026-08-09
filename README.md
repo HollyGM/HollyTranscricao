@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versão 2.0.0" src="https://img.shields.io/badge/vers%C3%A3o-2.0.0-8B5CF6">
+  <img alt="Versão 2.0.1" src="https://img.shields.io/badge/vers%C3%A3o-2.0.1-8B5CF6">
   <img alt="Python 3.11 a 3.13" src="https://img.shields.io/badge/Python-3.11%E2%80%933.13-5EE7F0">
   <img alt="Licença Apache 2.0" src="https://img.shields.io/badge/licen%C3%A7a-Apache--2.0-FF7A90">
 </p>
@@ -26,6 +26,17 @@
 - Exporta Markdown estruturado, legenda SRT e texto TXT.
 - Preserva resultados antigos: um novo processamento nunca sobrescreve uma transcrição existente.
 - Aplica correções determinísticas auditáveis; regras jurídicas só são ativadas quando a gravação é classificada como audiência ou oitiva.
+- Mantém o motor de transcrição isolado: uma falha nativa do MLX não fecha a interface.
+- Permite cancelar com segurança inclusive durante o download inicial de um modelo.
+
+## Modelos disponíveis
+
+| Modelo | Uso recomendado | Download inicial aproximado |
+|---|---|---:|
+| Large V3 Turbo | Perfil padrão: rápido e preciso para uso geral | 1,6 GB |
+| Large V2 | Alternativa para comparar áudios difíceis, com música ou ruído | 3,1 GB |
+
+O comportamento varia conforme a gravação. O Large V2 não é sempre mais preciso que o V3 Turbo, mas oferece um treinamento diferente que pode produzir um resultado melhor em determinados áudios. O download ocorre somente no primeiro uso e agora é mostrado separadamente da etapa de transcrição.
 
 ## Privacidade
 
@@ -88,7 +99,7 @@ tests/              testes automatizados
 
 ## Versão
 
-Versão atual: **2.0.0 (build 1)**. O histórico está em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **2.0.1 (build 2)**. O histórico está em [CHANGELOG.md](CHANGELOG.md).
 
 ## Licença
 

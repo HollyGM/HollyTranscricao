@@ -205,9 +205,21 @@ def _run_backend(
     """Despacha para o backend escolhido, com fallback automático em CPU."""
     if backend == "mlx":
         try:
-            from hollytranscricao.backend.mlx_transcriber import transcribe_audio_mlx
+            from hollytranscricao.backend.mlx_transcriber import (
+                prepare_mlx_model,
+                transcribe_audio_mlx,
+            )
 
-            # A primeira ETA é apenas para o Whisper (MLX)
+            # O download/verificação acontece antes da ETA. Assim a interface
+            # permanece indeterminada e não chama um download longo de
+            # "Finalizando".
+            model_path = prepare_mlx_model(
+                model_size=model_size,
+                hf_token=hf_token,
+                progress_callback=progress_callback,
+            )
+
+            # A primeira ETA é apenas para a inferência Whisper (MLX).
             _emit_eta(
                 eta_callback,
                 audio_duration,
@@ -224,6 +236,7 @@ def _run_backend(
                 max_speakers=max_speakers,
                 progress_callback=progress_callback,
                 eta_callback=eta_callback,
+                model_path=model_path,
             )
         except Exception as exc:  # noqa: BLE001
             logger.exception("Backend MLX falhou. Tentando Faster-Whisper em CPU.")

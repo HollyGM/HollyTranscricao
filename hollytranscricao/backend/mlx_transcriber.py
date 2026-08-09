@@ -16,20 +16,69 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Modelos MLX recomendados, em ordem de equilíbrio velocidade/qualidade.
-# Os pesos são baixados automaticamente do Hugging Face na primeira execução.
+# Dois perfis deliberadamente simples. O Turbo é a opção segura para uso
+# geral; o V2 integral permite comparar gravações difíceis com outro treinamento.
 MLX_MODEL_MAP = {
-    "tiny": "mlx-community/whisper-tiny-mlx",
-    "base": "mlx-community/whisper-base-mlx",
-    "small": "mlx-community/whisper-small-mlx",
-    "medium": "mlx-community/whisper-medium-mlx",
-    "large-v3": "mlx-community/whisper-large-v3-mlx",
     "large-v3-turbo": "mlx-community/whisper-large-v3-turbo",
+    "large-v2": "mlx-community/whisper-large-v2-mlx",
+}
+MLX_MODEL_REVISIONS = {
+    "large-v3-turbo": "a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb",
+    "large-v2": "cce86229e2765266197fef869ce9f7e2550067ab",
 }
 
 
 def _resolve_repo(model_size: str) -> str:
     return MLX_MODEL_MAP.get(model_size, MLX_MODEL_MAP["large-v3-turbo"])
+
+
+def prepare_mlx_model(
+    model_size: str,
+    hf_token: str | None = None,
+    progress_callback: Callable[[str], None] | None = None,
+) -> str:
+    """Garante que o modelo esteja completo antes de iniciar a estimativa.
+
+    O ``mlx_whisper.transcribe`` baixa pesos implicitamente. Em uma primeira
+    execução isso fazia a barra esgotar e exibir "Finalizando" durante minutos.
+    Antecipar o download mantém a barra indeterminada até o modelo estar pronto.
+    """
+    try:
+        from huggingface_hub import snapshot_download
+        from huggingface_hub.errors import LocalEntryNotFoundError
+    except ImportError as exc:
+        raise RuntimeError("huggingface-hub não está instalado no aplicativo.") from exc
+
+    repo = _resolve_repo(model_size)
+    revision = MLX_MODEL_REVISIONS.get(
+        model_size, MLX_MODEL_REVISIONS["large-v3-turbo"]
+    )
+    token = hf_token.strip() if hf_token and hf_token.strip() else None
+
+    try:
+        local_path = snapshot_download(
+            repo_id=repo,
+            revision=revision,
+            token=token,
+            local_files_only=True,
+        )
+        if progress_callback:
+            progress_callback(f"MLX: Modelo '{model_size}' já está disponível neste Mac.")
+        return str(local_path)
+    except LocalEntryNotFoundError:
+        pass
+
+    if progress_callback:
+        approximate_size = "3,1 GB" if model_size == "large-v2" else "1,6 GB"
+        progress_callback(
+            f"MLX: Baixando o modelo '{model_size}' pela primeira vez "
+            f"(aprox. {approximate_size}). A barra permanecerá animada durante o download..."
+        )
+
+    local_path = snapshot_download(repo_id=repo, revision=revision, token=token)
+    if progress_callback:
+        progress_callback(f"MLX: Download de '{model_size}' concluído e verificado.")
+    return str(local_path)
 
 
 def transcribe_audio_mlx(
@@ -41,6 +90,7 @@ def transcribe_audio_mlx(
     max_speakers: int | None = None,
     progress_callback: Callable[[str], None] | None = None,
     eta_callback: Callable[[float, str], None] | None = None,
+    model_path: str | None = None,
 ) -> dict[str, Any]:
     """Transcreve áudio com MLX-Whisper e, opcionalmente, aplica diarização Pyannote.
 
@@ -54,7 +104,7 @@ def transcribe_audio_mlx(
             "mlx-whisper não está instalado. Instale com: pip install mlx-whisper"
         ) from exc
 
-    repo = _resolve_repo(model_size)
+    repo = model_path or _resolve_repo(model_size)
 
     if progress_callback:
         progress_callback(f"MLX: Carregando modelo '{model_size}' na GPU do Apple Silicon...")

@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 # Bump quando defaults mudarem; reseta seleções salvas dos usuários antigos.
 # 4: diarização passou a ter interruptor próprio (antes bastava um token salvo
 #    para ligá-la em toda transcrição) e min/max locutores voltam para "auto".
-SETTINGS_VERSION = "5"
+SETTINGS_VERSION = "6"
 
 
 def _resource_path(relative_path: str) -> Path:
@@ -199,6 +199,7 @@ class MainWindow(QMainWindow):
         self.selected_file_path = ""
         self.generated_md_path = ""
         self.worker = None
+        self._close_when_cancelled = False
 
         # Progresso estimado por tempo (a transcrição é uma chamada bloqueante
         # sem sub-progresso; sem isto a barra fica parada e parece travada).
@@ -284,6 +285,11 @@ class MainWindow(QMainWindow):
         self.process_btn.clicked.connect(self._start_processing)
         actions.addWidget(self.process_btn, stretch=2)
 
+        self.cancel_btn = QPushButton("■  Cancelar")
+        self.cancel_btn.setEnabled(False)
+        self.cancel_btn.clicked.connect(self._cancel_processing)
+        actions.addWidget(self.cancel_btn, stretch=1)
+
         self.open_md_btn = QPushButton("Abrir Markdown (.md)")
         self.open_md_btn.setEnabled(False)
         self.open_md_btn.clicked.connect(self._open_generated_md)
@@ -358,17 +364,15 @@ class MainWindow(QMainWindow):
         self.model_combo = QComboBox()
         self.model_combo.addItems(
             [
-                "tiny — ultra-rápido, baixa precisão",
-                "base — rápido",
-                "small — equilibrado",
-                "medium — alta precisão (CPU lento)",
-                "large-v3 — altíssima precisão",
-                "large-v3-turbo — recomendado no Apple Silicon",
+                "large-v3-turbo — recomendado: rápido e preciso",
+                "large-v2 — alternativa para áudio com música ou ruído",
             ]
         )
         self.model_combo.setToolTip(
-            "Modelos maiores são mais precisos mas exigem mais RAM/tempo.\n"
-            "large-v3-turbo entrega qualidade ~large-v3 com velocidade ~small."
+            "Large V3 Turbo: melhor equilíbrio para uso geral e modelo recomendado.\n\n"
+            "Large V2: modelo integral e mais lento, oferecido como alternativa para\n"
+            "comparar gravações difíceis. O resultado varia conforme o áudio e ele\n"
+            "não é necessariamente melhor em toda gravação. No primeiro uso, baixa ~3,1 GB."
         )
         self._add_field(lay, "Modelo", self.model_combo)
 
@@ -524,7 +528,7 @@ class MainWindow(QMainWindow):
 
         if is_fresh:
             # Defaults novos (forçar large-v3-turbo + MLX, ainda que houvesse configuração antiga)
-            self.model_combo.setCurrentIndex(5)  # large-v3-turbo
+            self.model_combo.setCurrentIndex(0)  # large-v3-turbo
             self.backend_combo.setCurrentIndex(0 if self._mlx_supported else 1)
             self.recording_combo.setCurrentIndex(0)
             self.noise_checkbox.setChecked(False)
@@ -535,7 +539,7 @@ class MainWindow(QMainWindow):
             self.min_speakers_spin.setValue(0)
             self.max_speakers_spin.setValue(0)
         else:
-            self._safe_set_index(self.model_combo, self.settings.value("model_index", 5), default=5)
+            self._safe_set_index(self.model_combo, self.settings.value("model_index", 0), default=0)
             backend_default = 0 if self._mlx_supported else 1
             self._safe_set_index(
                 self.backend_combo,
@@ -721,7 +725,7 @@ class MainWindow(QMainWindow):
         self.open_md_btn.setEnabled(False)
         self.drop_zone.setAcceptDrops(False)
 
-        model_mapping = ["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo"]
+        model_mapping = ["large-v3-turbo", "large-v2"]
         backend_mapping = ["mlx", "faster-whisper"]
         recording_mapping = [
             "reuniao",
@@ -776,8 +780,28 @@ class MainWindow(QMainWindow):
         self.worker.progress_signal.connect(self._on_worker_progress)
         self.worker.finished_signal.connect(self._on_worker_finished)
         self.worker.error_signal.connect(self._on_worker_error)
+        self.worker.cancelled_signal.connect(self._on_worker_cancelled)
         self.worker.eta_signal.connect(self._on_eta_received)
+        self.cancel_btn.setEnabled(True)
         self.worker.start()
+
+    def _cancel_processing(self):
+        if not self.worker or not self.worker.isRunning():
+            return
+        answer = QMessageBox.question(
+            self,
+            "Cancelar transcrição",
+            "Deseja cancelar a transcrição em andamento?\n\n"
+            "O arquivo original não será alterado.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            self.cancel_btn.setEnabled(False)
+            self.progress_bar.setRange(0, 0)
+            self.progress_bar.setFormat("Cancelando…")
+            self._log("Cancelamento solicitado. Encerrando o motor com segurança…", "WARNING")
+            self.worker.cancel()
 
     def _on_worker_progress(self, message: str):
         self._log(message)
@@ -810,6 +834,7 @@ class MainWindow(QMainWindow):
             self._log(f"  • {kind.upper()}: {path}", level="SUCCESS")
 
         self.process_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
         self.open_md_btn.setEnabled(bool(self.generated_md_path))
         self.drop_zone.setAcceptDrops(True)
         if self.generated_md_path:
@@ -831,12 +856,29 @@ class MainWindow(QMainWindow):
         self._log(f"ERRO: {error_message}", level="CRITICAL")
         self._log("=== Processamento falhou ===", level="CRITICAL")
         self.process_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
         self.drop_zone.setAcceptDrops(True)
         QMessageBox.critical(
             self,
             "Falha no pipeline",
             f"Ocorreu um erro ao processar a transcrição:\n\n{error_message}",
         )
+
+    def _on_worker_cancelled(self):
+        self._stop_eta_timer()
+        self.progress_bar.setRange(0, 1000)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("Cancelado")
+        self._log("=== Transcrição cancelada pelo usuário ===", level="WARNING")
+        self.process_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
+        self.drop_zone.setAcceptDrops(True)
+        if self._close_when_cancelled:
+            self._close_when_cancelled = False
+            if self.worker and self.worker.isRunning():
+                self.worker.finished.connect(self.close)
+            else:
+                QTimer.singleShot(0, self.close)
 
     # ─────────────────── ETA / Barra de Progresso Real ───────────────────
 
@@ -892,14 +934,20 @@ class MainWindow(QMainWindow):
             self.open_md_btn.setEnabled(False)
 
     def closeEvent(self, event):
-        """Impede o encerramento brusco enquanto bibliotecas nativas trabalham."""
+        """Oferece cancelamento seguro enquanto o motor isolado trabalha."""
         if hasattr(self, "worker") and self.worker and self.worker.isRunning():
-            QMessageBox.information(
+            answer = QMessageBox.question(
                 self,
                 "Transcrição em andamento",
-                "A transcrição ainda está em andamento. Aguarde a conclusão antes "
-                "de fechar o aplicativo; isso evita arquivos temporários incompletos.",
+                "A transcrição ainda está em andamento. Deseja cancelá-la e fechar "
+                "o aplicativo?\n\nO arquivo original não será alterado.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             )
+            if answer == QMessageBox.StandardButton.Yes:
+                self._close_when_cancelled = True
+                self.cancel_btn.setEnabled(False)
+                self.worker.cancel()
             event.ignore()
             return
         event.accept()

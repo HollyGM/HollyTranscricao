@@ -2,6 +2,17 @@
 
 Todas as alterações relevantes são registradas neste arquivo. O projeto segue versionamento semântico.
 
+## [2.0.1] — 2026-08-08
+
+### Correções
+
+- Motor MLX movido para um processo isolado; falhas nativas como `SIGBUS` deixam de fechar o aplicativo inteiro.
+- Botão de cancelamento adicionado para interromper transcrições e downloads sem forçar o encerramento.
+- Fechamento durante uma transcrição agora oferece cancelar e sair com segurança.
+- Download inicial do modelo separado da estimativa de transcrição, evitando a barra presa em "Finalizando".
+- Lista de modelos simplificada para Large V3 Turbo e Large V2.
+- Large V2 adicionado como alternativa para comparar gravações com música ou ruído.
+
 ## [2.0.0] — 2026-08-08
 
 ### Identidade

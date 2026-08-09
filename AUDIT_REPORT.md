@@ -1,4 +1,4 @@
-# Relatório de revisão — HollyTranscrição 2.0.0
+# Relatório de revisão — HollyTranscrição 2.0.1
 
 Revisão realizada em 8 de agosto de 2026 sobre a versão 1.0.0 original.
 
@@ -17,6 +17,9 @@ Revisão realizada em 8 de agosto de 2026 sobre a versão 1.0.0 original.
 | Encerramento | Saída forçada podia deixar temporários | Fechamento bloqueado enquanto a transcrição trabalha |
 | Compatibilidade | Logs presos ao caminho do macOS | Caminhos próprios para macOS, Windows e Linux |
 | Dependências | WhisperX fixava PyTorch 2.8 | Faster-Whisper passou a atender o modo CPU |
+| Estabilidade MLX | Uma falha nativa fechava toda a interface | Motor isolado em processo monitorado; a interface permanece aberta |
+| Progresso | Download de modelo podia aparecer como "Finalizando" | Download ocorre antes da estimativa, com estado visual próprio |
+| Cancelamento | Operações nativas bloqueantes exigiam encerramento forçado | Cancelamento encerra somente o processo protegido |
 
 ## Verificações automatizadas
 

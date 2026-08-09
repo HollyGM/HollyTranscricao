@@ -1,0 +1,48 @@
+# Ambientes e Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Empacotamento
+build/
+dist/
+
+# Modelos e caches locais
+models/
+.cache/
+.huggingface/
+
+# Entradas de mídia e resultados de transcrição
+*.wav
+*.mp3
+*.mp4
+*.ogg
+*.opus
+*.m4a
+*.mov
+*.mkv
+*.aac
+*.wma
+*.webm
+*_transcricao.md
+*_transcricao.txt
+*.srt
+
+# Segredos e configurações locais
+.env
+.env.*
+!.env.example
+*.token
+.claude/
+
+# Editores e sistema operacional
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db

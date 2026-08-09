@@ -1,0 +1,34 @@
+name: Relatar problema
+description: Informe um erro reproduzível no HollyTranscrição.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Não anexe gravações, transcrições ou tokens privados.
+  - type: input
+    id: version
+    attributes:
+      label: Versão
+      placeholder: "2.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: Sistema
+      options: [macOS Apple Silicon, macOS Intel, Windows, Linux]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o comportamento, o esperado e como reproduzir.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Trecho de log sem dados privados
+      render: text

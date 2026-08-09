@@ -1,0 +1,19 @@
+name: Sugerir melhoria
+description: Proponha uma melhoria objetiva para o aplicativo.
+title: "[Melhoria]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Necessidade
+      description: Qual problema esta melhoria resolveria?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Como você imagina o funcionamento?
+    validations:
+      required: true

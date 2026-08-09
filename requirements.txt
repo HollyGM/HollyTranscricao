@@ -1,0 +1,7 @@
+# Núcleo do HollyTranscrição 2.0
+PySide6==6.11.1
+faster-whisper==1.2.1
+soundfile==0.14.0
+
+# Aceleração nativa no Mac com Apple Silicon.
+mlx-whisper==0.4.3; sys_platform == "darwin" and platform_machine == "arm64"

@@ -16,8 +16,9 @@ def test_only_curated_models_are_exposed_by_mlx_backend():
 
 
 def test_native_crash_message_keeps_recovery_actionable():
-    message = TranscriptionWorker._native_failure_message(-signal.SIGBUS)
+    native_signal = getattr(signal, "SIGBUS", signal.SIGTERM)
+    message = TranscriptionWorker._native_failure_message(-native_signal)
 
-    assert "SIGBUS" in message
+    assert signal.Signals(native_signal).name in message
     assert "permaneceu aberto" in message
     assert "Large V3 Turbo" in message

@@ -1,12 +1,10 @@
 <p align="center">
-  <img src="docs/images/hollytranscricao-icon.png" width="150" alt="Ícone do HollyTranscrição">
+  <img src="docs/branding/holly-banner.svg" alt="HollyTranscrição — transcrição local de áudio e vídeo" width="100%">
 </p>
 
-<h1 align="center">HollyTranscrição</h1>
-
 <p align="center">
-  Transcrição local de áudio e vídeo para Markdown, SRT e TXT.<br>
-  Privacidade por padrão, aceleração no Apple Silicon e modo portátil em CPU.
+  <strong>Transcrição local de áudio e vídeo para Markdown, SRT e TXT.</strong><br>
+  Privacidade por padrão · Apple Silicon · Modo portátil em CPU
 </p>
 
 <p align="center">
@@ -14,6 +12,10 @@
   <img alt="Python 3.11 a 3.13" src="https://img.shields.io/badge/Python-3.11%E2%80%933.13-5EE7F0">
   <img alt="Licença Apache 2.0" src="https://img.shields.io/badge/licen%C3%A7a-Apache--2.0-FF7A90">
 </p>
+
+> **Parte da suíte Holly**  
+> Ferramentas local-first para texto, documentos e mídia, com privacidade por padrão e segurança verificável.  
+> [HollyOCR](https://github.com/HollyGM/HollyOCR) · [HollyCorretor](https://github.com/HollyGM/HollyCorretor) · [HollyOptimizer](https://github.com/HollyGM/HollyOptimizer)
 
 ![Tela principal do HollyTranscrição](docs/images/screenshot-main.png)
 

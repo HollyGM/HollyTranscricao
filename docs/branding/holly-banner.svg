@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="360"><stop stop-color="#07101D"/><stop offset="1" stop-color="#1A1730"/></linearGradient>
+    <linearGradient id="accent" x1="150" y1="70" x2="1180" y2="320"><stop stop-color="#A887FF"/><stop offset="1" stop-color="#FF7A90"/></linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="28" fill="url(#bg)"/>
+  <g opacity="0.22" stroke="#A39BCB" stroke-width="2"><path d="M48 82H178L212 118H340"/><path d="M72 288H214L248 252H380"/><path d="M1010 74H1125L1162 110H1234"/><path d="M936 292H1062L1096 258H1232"/></g>
+  <circle cx="184" cy="180" r="84" fill="#08101E" stroke="url(#accent)" stroke-width="6"/>
+  <path d="M122 180C134 146 152 126 169 126C186 126 198 148 184 180C171 209 160 232 169 232C178 232 192 214 201 189C216 146 237 126 255 126" stroke="url(#accent)" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="184" cy="180" r="109" stroke="url(#accent)" stroke-width="2" stroke-dasharray="7 11" opacity="0.55"/>
+  <text x="305" y="106" fill="#C3A8FF" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="2.8">HOLLY SUITE · PRIVATE TRANSCRIPTION</text>
+  <text x="305" y="172" fill="#F7F2FF" font-family="Arial, sans-serif" font-size="58" font-weight="700">HollyTranscrição</text>
+  <text x="305" y="214" fill="#E5DCF8" font-family="Arial, sans-serif" font-size="26">Transcrição local de áudio e vídeo para Markdown, SRT e TXT</text>
+  <text x="305" y="255" fill="#BBAFD8" font-family="Arial, sans-serif" font-size="20">MLX-Whisper · Faster-Whisper · Apple Silicon · Privacidade por padrão</text>
+</svg>

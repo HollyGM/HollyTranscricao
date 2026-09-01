@@ -37,7 +37,7 @@ diarization = [
   "nltk>=3.10.0",
 ]
 dev = [
-  "PyInstaller==6.21.0",
+  "PyInstaller==6.22.2",
   "bandit==1.9.4",
   "Pillow==12.3.0",
   "pip-audit==2.10.1",

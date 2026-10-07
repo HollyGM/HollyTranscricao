@@ -160,4 +160,4 @@ def test_open_button_identifies_and_opens_generated_format(
     assert window.open_md_btn.isEnabled()
     assert window.open_md_btn.text() == label
     window._open_generated_md()
-    assert open_url.call_args.args[0].toLocalFile() == paths[selected]
+    assert Path(open_url.call_args.args[0].toLocalFile()) == Path(paths[selected])

@@ -1,8 +1,8 @@
 -r requirements.txt
 
-PyInstaller==6.21.0
+PyInstaller==6.22.3
 bandit==1.9.4
 Pillow==12.3.0
 pip-audit==2.10.1
 pytest==9.1.1
-ruff==0.16.2
+ruff==0.16.9

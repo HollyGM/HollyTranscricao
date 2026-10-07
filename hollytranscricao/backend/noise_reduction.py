@@ -23,7 +23,7 @@ def clean_audio(
     Returns:
         Um tuple contendo:
         - Caminho do arquivo de áudio limpo (WAV 16kHz mono).
-        - Booleano indicando se o tratamento inteligente foi aplicado com sucesso.
+        - Booleano indicando se a redução de ruído foi aplicada com sucesso.
     """
     if not os.path.exists(input_wav_path):
         raise FileNotFoundError(f"Arquivo WAV não encontrado: {input_wav_path}")
@@ -131,7 +131,7 @@ def clean_audio(
             raise RuntimeError(f"FFmpeg afftdn falhou: {process.stderr}")
 
         logger.info("Redução de ruído via FFmpeg concluída.")
-        return output_wav_path, applied_smart_denoise
+        return output_wav_path, True
 
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
         logger.error("Todas as tentativas de redução de ruído falharam: %s", exc)

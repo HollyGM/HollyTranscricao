@@ -1,7 +1,11 @@
 # Núcleo do HollyTranscrição 2.0
-PySide6==6.11.1
+PySide6==6.11.2
 faster-whisper==1.2.1
 soundfile==0.14.0
 
+# Correções de segurança no cliente HTTP usado pelas dependências.
+urllib3>=2.8.0,<3
+
 # Aceleração nativa no Mac com Apple Silicon.
+mlx==0.32.3; sys_platform == "darwin" and platform_machine == "arm64"
 mlx-whisper==0.4.3; sys_platform == "darwin" and platform_machine == "arm64"

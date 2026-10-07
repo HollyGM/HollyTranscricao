@@ -8,7 +8,6 @@ multiprocessing.freeze_support()
 
 import logging
 import os
-import platform
 import sys
 from pathlib import Path
 
@@ -103,35 +102,11 @@ def load_stylesheet(app: QApplication):
         logger.warning("Arquivo styles.css não encontrado em: %s", css_path)
 
 
-def _check_mlx_gpu():
-    """Tenta carregar o MLX e rodar uma operação simples na GPU para validar a instalação/bundle."""
-    try:
-        import mlx.core as mx
-
-        a = mx.array([1.0, 2.0, 3.0])
-        b = mx.exp(a)
-        mx.eval(b)
-        logger.info("MLX GPU disponível: %s", b.tolist())
-    except (ImportError, RuntimeError, OSError) as exc:
-        logger.warning("MLX indisponível neste ambiente: %s", exc)
-        # Log adicional de diagnóstico
-        try:
-            import inspect
-
-            import mlx.core
-
-            src = inspect.getfile(mlx.core)
-            logger.error("mlx.core carregado de: %s", src)
-        except (ImportError, OSError, TypeError) as diagnostic_error:
-            logger.debug("Diagnóstico adicional do MLX indisponível: %s", diagnostic_error)
-
-
 def main() -> int:
     logger.info("Iniciando %s %s...", APP_NAME, __version__)
 
-    # Verificação precoce do MLX para diagnosticar problemas de bundle
-    if sys.platform == "darwin" and platform.machine() == "arm64":
-        _check_mlx_gpu()
+    # O MLX só é inicializado no motor isolado. Um teste de GPU aqui também
+    # poderia provocar uma falha nativa e fechar a interface antes de abrir.
 
     # Criar instância da aplicação Qt
     app = QApplication(sys.argv)

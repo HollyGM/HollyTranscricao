@@ -21,9 +21,11 @@ classifiers = [
   "Topic :: Multimedia :: Sound/Audio :: Speech",
 ]
 dependencies = [
-  "PySide6==6.11.1",
+  "PySide6==6.11.2",
   "faster-whisper==1.2.1",
   "soundfile==0.14.0",
+  "urllib3>=2.8.0,<3",
+  "mlx==0.32.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
   "mlx-whisper==0.4.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 
@@ -37,12 +39,12 @@ diarization = [
   "nltk>=3.10.0",
 ]
 dev = [
-  "PyInstaller==6.21.0",
+  "PyInstaller==6.22.3",
   "bandit==1.9.4",
   "Pillow==12.3.0",
   "pip-audit==2.10.1",
   "pytest==9.1.1",
-  "ruff==0.16.2",
+  "ruff==0.16.9",
 ]
 
 [project.gui-scripts]

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import datetime as _dt
+import errno
 import json
 import os
 import re
+import sys
 import tempfile
 from contextlib import suppress
 from pathlib import Path
@@ -71,32 +73,89 @@ def _safe_base_name(value: str) -> str:
 
 
 def _unique_output_path(output_dir: Path, filename: str) -> Path:
-    """Nunca sobrescreve um resultado anterior."""
+    """Sugere um nome livre; a publicação ainda verifica colisões atomicamente."""
     candidate = output_dir / filename
-    if not candidate.exists():
+    if not os.path.lexists(candidate):
         return candidate
     stem, suffix = candidate.stem, candidate.suffix
     counter = 2
     while True:
         candidate = output_dir / f"{stem}-{counter}{suffix}"
-        if not candidate.exists():
+        if not os.path.lexists(candidate):
             return candidate
         counter += 1
 
 
-def _atomic_write(path: Path, content: str) -> None:
-    """Grava em arquivo temporário e só então publica o resultado final."""
+def _publish_exclusive(temp_name: str, path: Path) -> None:
+    """Publica o arquivo completo, recusando qualquer caminho já existente."""
+    try:
+        os.link(temp_name, path)
+        return
+    except OSError as exc:
+        if exc.errno not in {
+            errno.EPERM,
+            errno.EACCES,
+            errno.EINVAL,
+            errno.ENOSYS,
+            errno.ENOTSUP,
+            errno.EOPNOTSUPP,
+            errno.EXDEV,
+        }:
+            raise
+
+    # FAT/exFAT e alguns destinos de rede não permitem hardlinks. Usar a
+    # operação exclusiva do sistema mantém a publicação atômica nesses casos.
+    if os.name == "nt":
+        os.rename(temp_name, path)  # No Windows, rename recusa destino existente.
+        return
+
+    import ctypes
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform == "darwin":
+        rename = getattr(libc, "renamex_np", None)
+        arguments = (os.fsencode(temp_name), os.fsencode(path), 0x00000004)  # RENAME_EXCL
+        argument_types = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint)
+    elif sys.platform.startswith("linux"):
+        rename = getattr(libc, "renameat2", None)
+        arguments = (-100, os.fsencode(temp_name), -100, os.fsencode(path), 1)  # RENAME_NOREPLACE
+        argument_types = (
+            ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint
+        )
+    else:
+        rename = None
+    if rename is None:
+        raise OSError(
+            errno.ENOTSUP,
+            "O destino não permite publicar resultados sem sobrescrever arquivos. "
+            "Escolha outra pasta de saída.",
+            str(path),
+        )
+    rename.argtypes = argument_types
+    rename.restype = ctypes.c_int
+    if rename(*arguments) != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(path))
+
+
+def _atomic_write(path: Path, content: str) -> Path:
+    """Grava e publica com exclusividade; colisões recebem um novo nome."""
     fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temp_name, path)
-    except BaseException:
+        candidate = _unique_output_path(path.parent, path.name)
+        while True:
+            try:
+                _publish_exclusive(temp_name, candidate)
+                return candidate
+            except FileExistsError:
+                candidate = _unique_output_path(path.parent, path.name)
+    finally:
         with suppress(OSError):
             os.unlink(temp_name)
-        raise
 
 
 def _split_into_paragraphs(blocks: list[dict[str, Any]]) -> list[tuple[str, float]]:
@@ -507,18 +566,18 @@ def write_outputs(
     paths: dict[str, str] = {}
 
     if write_md and md_content:
-        md_path = _unique_output_path(output_path, f"{safe_base}_transcricao.md")
-        _atomic_write(md_path, md_content)
+        md_path = _atomic_write(output_path / f"{safe_base}_transcricao.md", md_content)
         paths["md"] = str(md_path)
 
     if write_srt:
-        srt_path = _unique_output_path(output_path, f"{safe_base}.srt")
-        _atomic_write(srt_path, render_srt(segments))
+        srt_path = _atomic_write(output_path / f"{safe_base}.srt", render_srt(segments))
         paths["srt"] = str(srt_path)
 
     if write_txt:
-        txt_path = _unique_output_path(output_path, f"{safe_base}_transcricao.txt")
-        _atomic_write(txt_path, render_plain_text(segments, diarized=diarized))
+        txt_path = _atomic_write(
+            output_path / f"{safe_base}_transcricao.txt",
+            render_plain_text(segments, diarized=diarized),
+        )
         paths["txt"] = str(txt_path)
 
     return paths

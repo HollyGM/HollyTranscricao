@@ -10,6 +10,7 @@ from __future__ import annotations
 import bisect
 import gc
 import logging
+import math
 import os
 from collections.abc import Callable
 from typing import Any
@@ -357,9 +358,79 @@ def apply_pyannote_diarization(
     return segments
 
 
+def _split_word_speakers(segment: dict[str, Any]) -> list[dict[str, Any]]:
+    """Separa intervenções dentro de um segmento sem reconstruir o texto.
+
+    Só usa o alinhamento por palavra quando ele cobre o texto integral e traz
+    tempos válidos. Saídas incompletas preservam o segmento original, pois não
+    permitem atribuir com segurança o texto restante a um interlocutor.
+    """
+    words = segment.get("words") or []
+    if not words or any(not isinstance(word, dict) for word in words):
+        return [segment]
+
+    speakers = [word.get("speaker") or segment.get("speaker") for word in words]
+    boundaries = [index for index in range(1, len(words)) if speakers[index] != speakers[index - 1]]
+    if not boundaries and speakers[0] == segment.get("speaker"):
+        return [segment]
+
+    text = (segment.get("text") or "").strip()
+    offsets: list[int] = []
+    times: list[tuple[float, float]] = []
+    cursor = 0
+    for word in words:
+        token = word.get("word") or word.get("text")
+        if not isinstance(token, str) or not token.strip():
+            return [segment]
+        token = token.strip()
+        while cursor < len(text) and text[cursor].isspace():
+            cursor += 1
+        if not text.startswith(token, cursor):
+            return [segment]
+        offsets.append(cursor)
+        cursor += len(token)
+
+        try:
+            start, end = float(word["start"]), float(word["end"])
+        except (KeyError, TypeError, ValueError, OverflowError):
+            return [segment]
+        if not math.isfinite(start) or not math.isfinite(end) or start < 0 or end < start:
+            return [segment]
+        if times and (start < times[-1][0] or end < times[-1][1]):
+            return [segment]
+        times.append((start, end))
+
+    if text[cursor:].strip():
+        return [segment]
+    if not boundaries:
+        return [{**segment, "speaker": speakers[0]}]
+
+    split: list[dict[str, Any]] = []
+    starts = [0, *boundaries]
+    ends = [*boundaries, len(words)]
+    for first, last in zip(starts, ends, strict=True):
+        text_end = offsets[last] if last < len(words) else len(text)
+        split.append(
+            {
+                **segment,
+                "start": times[first][0],
+                "end": times[last - 1][1],
+                "text": text[offsets[first] : text_end].strip(),
+                "speaker": speakers[first],
+                "words": words[first:last],
+            }
+        )
+    return split
+
+
 def format_segments(segments: list[dict[str, Any]], diarized: bool) -> list[dict[str, Any]]:
     formatted: list[dict[str, Any]] = []
-    for seg in segments:
+    aligned_segments = (
+        [part for segment in segments for part in _split_word_speakers(segment)]
+        if diarized
+        else segments
+    )
+    for seg in aligned_segments:
         text = (seg.get("text") or "").strip()
         if not text:
             continue
@@ -379,8 +450,6 @@ def format_segments(segments: list[dict[str, Any]], diarized: bool) -> list[dict
         avg_logprob = seg.get("avg_logprob")
         confidence = None
         if isinstance(avg_logprob, (int, float)):
-            import math
-
             confidence = max(0.0, min(1.0, math.exp(float(avg_logprob))))
 
         formatted.append(

@@ -4,5 +4,5 @@ APP_NAME = "HollyTranscrição"
 APP_SLUG = "HollyTranscricao"
 APP_ID = "com.hollyapps.hollytranscricao"
 ORGANIZATION_NAME = "HollyApps"
-__version__ = "2.0.1"
-BUILD_NUMBER = 2
+__version__ = "2.0.4"
+BUILD_NUMBER = 5

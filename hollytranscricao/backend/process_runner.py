@@ -7,6 +7,7 @@ motor fora do processo da interface impede que esse tipo de falha feche o app.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from hollytranscricao.backend.orchestrator import run_transcription_pipeline
@@ -14,6 +15,11 @@ from hollytranscricao.backend.orchestrator import run_transcription_pipeline
 
 def run_pipeline_process(options: dict[str, Any], event_queue: Any) -> None:
     """Executa o pipeline e envia eventos serializáveis ao processo da interface."""
+
+    # FFmpeg e outros subprocessos herdam este grupo. O cancelamento pode
+    # encerrar toda a operação sem atingir o processo da interface.
+    if os.name == "posix":
+        os.setsid()
 
     def report_progress(message: str) -> None:
         event_queue.put(("progress", str(message)))

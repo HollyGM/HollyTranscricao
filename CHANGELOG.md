@@ -2,6 +2,39 @@
 
 Todas as alterações relevantes são registradas neste arquivo. O projeto segue versionamento semântico.
 
+## [2.0.4] — 2026-10-02
+
+### Segurança e estabilidade
+
+- urllib3 atualizado para 2.8.0, corrigindo CVE-2026-97687, CVE-2026-97688 e CVE-2026-97689; os requisitos impedem reinstalar versões vulneráveis.
+- MLX e MLX Metal atualizados para 0.32.3, com correções de deadlocks e operações Metal.
+- Inicialização da interface deixa de executar operações nativas na GPU; o motor permanece no processo isolado.
+- Cancelamento passa a funcionar também durante a criação do motor. No macOS/Linux, encerra os subprocessos da operação e remove os arquivos temporários após o término do motor.
+- Seleção de mídia e início de outra transcrição ficam bloqueados enquanto o motor trabalha.
+
+### Correções
+
+- Exportações concorrentes passam a publicar arquivos com exclusividade e nomes únicos, impedindo que uma instância sobrescreva o resultado de outra.
+- Mudanças de interlocutor dentro de um segmento são preservadas quando há alinhamento completo por palavra.
+- Redução de ruído por FFmpeg concluída com sucesso passa a constar corretamente nos metadados.
+- Pastas digitadas com `~` são normalizadas e o botão de abertura identifica o formato gerado.
+- Versão e número de build no README sincronizados com o aplicativo.
+
+## [2.0.3] — 2026-09-30
+
+### Manutenção
+
+- Qt/PySide6 atualizado de 6.11.1 para 6.11.2, incluindo as correções de estabilidade da interface.
+- Ferramentas de build e qualidade atualizadas: PyInstaller 6.22.3 e Ruff 0.16.9.
+- Selo de versão do README corrigido.
+- Auditoria de dependências (`pip-audit`) sem vulnerabilidades conhecidas no núcleo.
+
+## [2.0.2] — 2026-09-11
+
+### Correções
+
+- Vídeos QuickTime (`.qt`) e outros contêineres comuns (`.m4v`, `.avi`, `.wmv`, `.mpg`, `.mpeg`, `.3gp`, `.ts`, `.aiff`, `.amr`) passam a aparecer no seletor de arquivos e deixam de disparar o aviso de formato não suportado.
+
 ## [2.0.1] — 2026-08-08
 
 ### Correções

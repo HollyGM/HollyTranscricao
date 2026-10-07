@@ -54,6 +54,39 @@ logger = logging.getLogger(__name__)
 #    para ligá-la em toda transcrição) e min/max locutores voltam para "auto".
 SETTINGS_VERSION = "6"
 
+# O FFmpeg identifica o formato pelo conteúdo do arquivo, não pela extensão;
+# esta lista só alimenta o filtro do seletor e o aviso de formato incomum.
+MEDIA_EXTENSIONS = (
+    # Áudio
+    ".mp3",
+    ".wav",
+    ".ogg",
+    ".opus",
+    ".m4a",
+    ".flac",
+    ".aac",
+    ".wma",
+    ".aiff",
+    ".amr",
+    # Vídeo
+    ".mp4",
+    ".mov",
+    ".qt",
+    ".m4v",
+    ".mkv",
+    ".webm",
+    ".avi",
+    ".wmv",
+    ".mpg",
+    ".mpeg",
+    ".3gp",
+    ".ts",
+)
+
+MEDIA_FILE_FILTER = (
+    f"Arquivos de mídia ({' '.join(f'*{ext}' for ext in MEDIA_EXTENSIONS)});;Todos os arquivos (*)"
+)
+
 
 def _resource_path(relative_path: str) -> Path:
     root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
@@ -127,6 +160,8 @@ class DropZone(QFrame):
             self.set_file(urls[0].toLocalFile())
 
     def set_file(self, file_path: str):
+        if not self.isEnabled() or not self.acceptDrops():
+            return
         # Pastas e itens inexistentes não são entradas válidas para o FFmpeg
         if not os.path.isfile(file_path):
             QMessageBox.warning(
@@ -136,22 +171,8 @@ class DropZone(QFrame):
             )
             return
 
-        valid_exts = {
-            ".mp3",
-            ".wav",
-            ".ogg",
-            ".opus",
-            ".m4a",
-            ".flac",
-            ".mp4",
-            ".mov",
-            ".mkv",
-            ".aac",
-            ".wma",
-            ".webm",
-        }
         ext = os.path.splitext(file_path)[1].lower()
-        if ext not in valid_exts:
+        if ext not in MEDIA_EXTENSIONS:
             QMessageBox.warning(
                 self,
                 "Formato não suportado",
@@ -175,8 +196,7 @@ class DropZone(QFrame):
                 self,
                 "Selecionar arquivo de mídia",
                 "",
-                "Arquivos de mídia (*.mp3 *.wav *.ogg *.opus *.m4a *.flac "
-                "*.mp4 *.mov *.mkv *.aac *.wma *.webm);;Todos os arquivos (*)",
+                MEDIA_FILE_FILTER,
             )
             if file_path:
                 self.set_file(file_path)
@@ -290,7 +310,7 @@ class MainWindow(QMainWindow):
         self.cancel_btn.clicked.connect(self._cancel_processing)
         actions.addWidget(self.cancel_btn, stretch=1)
 
-        self.open_md_btn = QPushButton("Abrir Markdown (.md)")
+        self.open_md_btn = QPushButton("Abrir arquivo gerado")
         self.open_md_btn.setEnabled(False)
         self.open_md_btn.clicked.connect(self._open_generated_md)
         actions.addWidget(self.open_md_btn, stretch=1)
@@ -625,6 +645,8 @@ class MainWindow(QMainWindow):
             widget.setEnabled(checked)
 
     def _on_file_selected(self, file_path: str):
+        if self.worker and self.worker.isRunning():
+            return
         self.selected_file_path = file_path
         self.process_btn.setEnabled(True)
         self._log(f"Arquivo selecionado: {os.path.basename(file_path)}")
@@ -651,6 +673,8 @@ class MainWindow(QMainWindow):
         self.console.ensureCursorVisible()
 
     def _start_processing(self):
+        if self.worker and self.worker.isRunning():
+            return
         if not self.selected_file_path:
             return
 
@@ -684,7 +708,8 @@ class MainWindow(QMainWindow):
         output_dir = self.output_dir_input.text().strip()
         if not output_dir:
             output_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-            self.output_dir_input.setText(output_dir)
+        output_dir = os.path.abspath(os.path.expanduser(output_dir))
+        self.output_dir_input.setText(output_dir)
         try:
             os.makedirs(output_dir, exist_ok=True)
         except OSError as exc:
@@ -723,7 +748,10 @@ class MainWindow(QMainWindow):
 
         self.process_btn.setEnabled(False)
         self.open_md_btn.setEnabled(False)
+        self.open_md_btn.setText("Abrir arquivo gerado")
+        self.generated_md_path = ""
         self.drop_zone.setAcceptDrops(False)
+        self.drop_zone.setEnabled(False)
 
         model_mapping = ["large-v3-turbo", "large-v2"]
         backend_mapping = ["mlx", "faster-whisper"]
@@ -824,6 +852,13 @@ class MainWindow(QMainWindow):
 
         md_path = output_paths.get("md")
         self.generated_md_path = md_path or next(iter(output_paths.values()), "")
+        output_kind = "md" if md_path else next(iter(output_paths), "")
+        open_labels = {
+            "md": "Abrir Markdown (.md)",
+            "srt": "Abrir legenda (.srt)",
+            "txt": "Abrir texto (.txt)",
+        }
+        self.open_md_btn.setText(open_labels.get(output_kind, "Abrir arquivo gerado"))
 
         self.progress_bar.setRange(0, 1000)
         self.progress_bar.setValue(1000)
@@ -837,6 +872,7 @@ class MainWindow(QMainWindow):
         self.cancel_btn.setEnabled(False)
         self.open_md_btn.setEnabled(bool(self.generated_md_path))
         self.drop_zone.setAcceptDrops(True)
+        self.drop_zone.setEnabled(True)
         if self.generated_md_path:
             self.open_md_btn.setFocus()
 
@@ -858,6 +894,7 @@ class MainWindow(QMainWindow):
         self.process_btn.setEnabled(True)
         self.cancel_btn.setEnabled(False)
         self.drop_zone.setAcceptDrops(True)
+        self.drop_zone.setEnabled(True)
         QMessageBox.critical(
             self,
             "Falha no pipeline",
@@ -873,6 +910,7 @@ class MainWindow(QMainWindow):
         self.process_btn.setEnabled(True)
         self.cancel_btn.setEnabled(False)
         self.drop_zone.setAcceptDrops(True)
+        self.drop_zone.setEnabled(True)
         if self._close_when_cancelled:
             self._close_when_cancelled = False
             if self.worker and self.worker.isRunning():

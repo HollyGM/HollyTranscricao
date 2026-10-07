@@ -42,10 +42,13 @@ def run_transcription_pipeline(
     write_txt: bool = False,
     progress_callback: Callable[[str], None] | None = None,
     eta_callback: Callable[[float, str], None] | None = None,
+    work_dir: str | None = None,
 ) -> dict[str, str]:
     """Executa o pipeline completo. Retorna um dicionário com os caminhos gerados."""
 
-    temp_dir = tempfile.mkdtemp(prefix="hollytranscricao_")
+    # No app, a interface é dona dos temporários e os remove mesmo quando
+    # o motor recebe SIGTERM ou sofre uma falha nativa.
+    temp_dir = work_dir or tempfile.mkdtemp(prefix="hollytranscricao_")
 
     try:
         # ── Passo 1: Extração / Conversão ──
@@ -153,10 +156,11 @@ def run_transcription_pipeline(
             progress_callback(f"ERRO CRÍTICO: {exc}")
         raise
     finally:
-        try:
-            shutil.rmtree(temp_dir)
-        except OSError as exc:
-            logger.warning("Não removeu temp dir %s: %s", temp_dir, exc)
+        if work_dir is None:
+            try:
+                shutil.rmtree(temp_dir)
+            except OSError as exc:
+                logger.warning("Não removeu temp dir %s: %s", temp_dir, exc)
 
 
 # Fatores medidos no MacBook Air M5 (10 núcleos, 16 GB), amostra de 103 s,

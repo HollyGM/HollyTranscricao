@@ -15,7 +15,7 @@
 
 > **Parte da suíte Holly**  
 > Ferramentas local-first para texto, documentos e mídia, com privacidade por padrão e segurança verificável.  
-> [HollyOCR](https://github.com/HollyGM/HollyOCR) · [HollyCorretor](https://github.com/HollyGM/HollyCorretor) · [HollyOptimizer](https://github.com/HollyGM/HollyOptimizer)
+> [HollyOCR](https://github.com/HollyGM/HollyOCR) · [HollyCorretor](https://github.com/HollyGM/HollyCorretor) · [HollyOptimizer](https://github.com/HollyGM/HollyOptimizer) · [Texto em Áudio](https://github.com/HollyGM/HollyTextoEmAudio) (voz online)
 
 ![Tela principal do HollyTranscrição](docs/images/screenshot-main.png)
 

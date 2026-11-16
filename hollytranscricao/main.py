@@ -102,7 +102,48 @@ def load_stylesheet(app: QApplication):
         logger.warning("Arquivo styles.css não encontrado em: %s", css_path)
 
 
+def run_self_test(media_path: str) -> int:
+    """Transcreve um arquivo sem abrir a janela e confere o resultado.
+
+    Uso: ``HollyTranscricao --autoteste arquivo.m4a``. Serve para conferir o
+    aplicativo empacotado (por exemplo, que nenhuma biblioteca do motor ficou
+    de fora). Os arquivos gerados vão para uma pasta temporária e são apagados.
+    """
+    import platform
+    import tempfile
+
+    from hollytranscricao.backend.orchestrator import run_transcription_pipeline
+
+    apple_silicon = sys.platform == "darwin" and platform.machine() == "arm64"
+    print(f"{APP_NAME} {__version__} — autoteste do motor", flush=True)
+    try:
+        with tempfile.TemporaryDirectory(prefix="hollytranscricao_autoteste_") as output_dir:
+            paths = run_transcription_pipeline(
+                input_file_path=media_path,
+                output_md_dir=output_dir,
+                backend="mlx" if apple_silicon else "cpu",
+                apply_noise_reduction=True,
+                write_md=True,
+                write_srt=True,
+                write_txt=True,
+                progress_callback=lambda message: print("  " + message.splitlines()[0], flush=True),
+            )
+            text = Path(paths["txt"]).read_text(encoding="utf-8").strip()
+            if not text or set(paths) != {"md", "srt", "txt"}:
+                print("AUTOTESTE FALHOU: resultado incompleto", flush=True)
+                return 1
+            print("Texto: " + text[:300], flush=True)
+    except Exception as exc:  # noqa: BLE001
+        print(f"AUTOTESTE FALHOU: {exc}", flush=True)
+        return 1
+    print("AUTOTESTE OK", flush=True)
+    return 0
+
+
 def main() -> int:
+    if len(sys.argv) >= 3 and sys.argv[1] == "--autoteste":
+        return run_self_test(sys.argv[2])
+
     logger.info("Iniciando %s %s...", APP_NAME, __version__)
 
     # O MLX só é inicializado no motor isolado. Um teste de GPU aqui também

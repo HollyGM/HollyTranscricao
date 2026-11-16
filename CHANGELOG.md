@@ -2,6 +2,25 @@
 
 Todas as alterações relevantes são registradas neste arquivo. O projeto segue versionamento semântico.
 
+## [2.0.5] — 2026-11-16
+
+### Segurança
+
+- `certifi` 2026.7.22 → 2026.10.23, empacotado no aplicativo e usado nas conexões HTTPS do download dos modelos. A versão anterior incluía raízes da autoridade emSign com chaves intermediárias comprometidas (alerta crítico de 20/10/2026).
+- `filelock` 3.32.6 → 4.2.10 (13 alertas, usado pelo cache de modelos do `huggingface_hub`), `msgpack` 1.2.2 → 1.2.4 (dependência do `pip-audit`), `setuptools` 84.0.0 → 84.2.1 e Pillow 12.3.0 → 13.0.0 (só no build, para gerar os ícones; 62 alertas).
+- `requirements.txt` e `pyproject.toml` passam a exigir `certifi` e `filelock` corrigidos, como já faziam com o `urllib3`.
+- Novo `requirements-macos-lock.txt` trava as 81 bibliotecas do build, todas sem alertas conhecidos na consulta de 16/11/2026. Antes não havia travas, e o ambiente tinha se afastado das versões declaradas.
+- A verificação do GitHub passa a auditar as dependências instaladas (`pip-audit`) e a rodar também uma vez por mês.
+
+### Desempenho
+
+- O PyTorch (cerca de 400 MB) e o Pillow deixam de ir dentro do aplicativo. Só a separação de interlocutores e o DeepFilterNet usam o PyTorch, e os dois são complementos opcionais fora do pacote padrão. O motor padrão (MLX, Faster-Whisper e CTranslate2) funciona sem ele.
+- Com a redução de ruído ligada e sem o DeepFilterNet instalado, o aplicativo vai direto ao filtro do FFmpeg, sem carregar o PyTorch (cerca de 3 segundos por transcrição). A barra de progresso informa o método realmente usado.
+
+### Novo
+
+- `HollyTranscricao --autoteste arquivo` transcreve um arquivo sem abrir a janela e termina com `AUTOTESTE OK`. Serve para conferir o aplicativo empacotado.
+
 ## [2.0.4] — 2026-10-02
 
 ### Segurança e estabilidade

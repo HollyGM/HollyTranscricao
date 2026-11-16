@@ -2,7 +2,9 @@
 
 PyInstaller==6.22.3
 bandit==1.9.4
-Pillow==12.3.0
+Pillow==13.0.0
+# Dependência do pip-audit; piso de segurança.
+msgpack>=1.2.3
 pip-audit==2.10.1
 pytest==9.1.1
 ruff==0.16.9

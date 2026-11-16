@@ -34,6 +34,13 @@ OPTIONAL_EXCLUDES = [] if HAS_DIARIZATION else [
     'torchaudio',
     'torchcodec',
 ]
+# O PyTorch (cerca de 400 MB) só serve à separação de interlocutores e ao
+# DeepFilterNet, complementos opcionais. O motor padrão (MLX, Faster-Whisper,
+# CTranslate2) importa o PyTorch só de forma opcional e funciona sem ele.
+# O Pillow serve apenas para gerar os ícones no build.
+HAS_DEEPFILTERNET = has_module('df')
+if not (HAS_DIARIZATION or HAS_DEEPFILTERNET):
+    OPTIONAL_EXCLUDES += ['torch', 'functorch', 'torchgen', 'torchvision', 'PIL']
 
 # =============================================================================
 # DATAS: Arquivos de dados não-Python que precisam estar no bundle

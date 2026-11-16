@@ -1,6 +1,20 @@
-# Relatório de revisão — HollyTranscrição 2.0.4
+# Relatório de revisão — HollyTranscrição 2.0.5
 
 Revisão inicial realizada em 8 de agosto de 2026 sobre a versão 1.0.0 original. Nova revisão do código e das dependências em 2 de outubro de 2026.
+
+## Atualização de 16 de novembro de 2026 (2.0.5)
+
+- **Dependências.** A consulta à base OSV com os 81 pacotes do ambiente encontrou alertas publicados depois da revisão de outubro. Três estavam dentro do aplicativo instalado:
+  - `certifi` 2026.7.22, com alerta crítico: raízes emSign com chaves intermediárias comprometidas;
+  - `filelock` 3.32.6, com 13 alertas;
+  - Pillow 12.3.0, com 62 alertas.
+
+  Também havia alertas em `msgpack` e `setuptools`, só no ambiente de build. Todos foram atualizados. As 81 bibliotecas do novo `requirements-macos-lock.txt` estão sem alertas conhecidos.
+- **Tamanho do pacote.** O aplicativo de 1,1 GB levava 407 MB de PyTorch sem uso. A separação de interlocutores e o DeepFilterNet ficam fora do pacote padrão, e a interface já desligava a diarização. O motor foi exercitado com PyTorch e Pillow bloqueados, e todos os imports funcionaram. O build padrão passou a excluí-los.
+- **Redução de ruído.** Com ela ligada, o PyTorch era importado (2,9 s medidos) só para descobrir que o DeepFilterNet não existia. Agora o FFmpeg é usado diretamente.
+- **Verificação.** Foram acrescentados `--autoteste` e a auditoria de dependências na CI, com execução mensal.
+- **Dependabot.** Três PRs superados pela `main` foram fechados (PySide6, PyInstaller e Ruff). O PR do PyTorch 2.13 não pode ser aceito sozinho, porque o torchaudio 2.13 não existe e o trio PyTorch/torchaudio/Pyannote precisa andar junto. O do Pyannote 4.0.7 é compatível com o PyTorch atual, mas a CI não testa a diarização.
+- **Motor.** Uma gravação sintética em português, com a voz Luciana do macOS, foi transcrita sem erros pelo MLX na GPU. O teste completo levou cerca de 10 s.
 
 ## Atualização de 2 de outubro de 2026
 

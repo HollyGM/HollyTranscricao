@@ -3,8 +3,12 @@ PySide6==6.11.2
 faster-whisper==1.2.1
 soundfile==0.14.0
 
-# Correções de segurança no cliente HTTP usado pelas dependências.
+# Pisos de segurança em dependências indiretas usadas no download dos modelos.
 urllib3>=2.8.0,<3
+# certifi: autoridades de certificação confiáveis (2026.10.18 remove raízes emSign comprometidas).
+certifi>=2026.10.18
+# filelock: usado pelo huggingface_hub no cache dos modelos.
+filelock>=4.2.1,<5
 
 # Aceleração nativa no Mac com Apple Silicon.
 mlx==0.32.3; sys_platform == "darwin" and platform_machine == "arm64"

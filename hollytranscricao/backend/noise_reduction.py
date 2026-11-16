@@ -1,3 +1,4 @@
+import importlib.util
 import logging
 import os
 import shutil
@@ -7,6 +8,14 @@ from contextlib import suppress
 from hollytranscricao.backend.audio_extractor import resolve_ffmpeg
 
 logger = logging.getLogger(__name__)
+
+
+def deepfilternet_available() -> bool:
+    """DeepFilterNet é um complemento opcional; o pacote padrão usa o filtro do FFmpeg."""
+    try:
+        return importlib.util.find_spec("df") is not None
+    except (ImportError, ValueError):
+        return False
 
 
 def clean_audio(
@@ -40,7 +49,10 @@ def clean_audio(
     applied_smart_denoise = False
     ffmpeg = resolve_ffmpeg()
 
-    if not force_ffmpeg:
+    # Sem o DeepFilterNet instalado, nem carrega o PyTorch (cerca de 3 s à toa).
+    if not force_ffmpeg and not deepfilternet_available():
+        logger.info("DeepFilterNet não instalado; usando o filtro afftdn do FFmpeg.")
+    elif not force_ffmpeg:
         try:
             logger.info("Tentando aplicar redução de ruído via DeepFilterNet...")
             # Importa dinamicamente para não carregar PyTorch quando não for usado.

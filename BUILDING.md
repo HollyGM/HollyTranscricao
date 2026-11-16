@@ -8,12 +8,22 @@ Use Python 3.12 em um Mac Apple Silicon. Instale o FFmpeg e as dependências com
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements-macos-lock.txt
 python assets/build_icons.py
 pyinstaller --noconfirm --clean HollyTranscricao.spec
 ```
 
-O aplicativo será criado em `dist/HollyTranscricao.app`. O build padrão não inclui Pyannote. O pacote local não é assinado nem notarizado; para distribuição pública, configure um certificado Developer ID, assinatura de código e notarização da Apple.
+O aplicativo será criado em `dist/HollyTranscricao.app`. O arquivo `requirements-macos-lock.txt` trava as versões conferidas (núcleo e ferramentas de build); `requirements-dev.txt` continua disponível para quem quiser as versões mais novas permitidas.
+
+O build padrão não inclui Pyannote, DeepFilterNet nem PyTorch (cerca de 400 MB): o PyTorch é instalado porque o `mlx-whisper` o declara, mas fica fora do pacote. Ele só entra quando a diarização (`HOLLY_INCLUDE_DIARIZATION=1`) ou o DeepFilterNet estão presentes.
+
+Para conferir o pacote sem abrir a janela, transcreva um arquivo curto:
+
+```bash
+dist/HollyTranscricao.app/Contents/MacOS/HollyTranscricao --autoteste gravacao.m4a
+```
+
+A saída termina em `AUTOTESTE OK` quando o motor, o FFmpeg e a exportação funcionam. O pacote local não é assinado nem notarizado; para distribuição pública, configure um certificado Developer ID, assinatura de código e notarização da Apple.
 
 Para um build local experimental com diarização, instale `requirements-diarization.txt` e defina `HOLLY_INCLUDE_DIARIZATION=1` ao executar o PyInstaller. Leia antes as limitações de dependências no relatório de auditoria.
 

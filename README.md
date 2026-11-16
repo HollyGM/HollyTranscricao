@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versão 2.0.4" src="https://img.shields.io/badge/vers%C3%A3o-2.0.4-8B5CF6">
+  <img alt="Versão 2.0.5" src="https://img.shields.io/badge/vers%C3%A3o-2.0.5-8B5CF6">
   <img alt="Python 3.11 a 3.13" src="https://img.shields.io/badge/Python-3.11%E2%80%933.13-5EE7F0">
   <img alt="Licença Apache 2.0" src="https://img.shields.io/badge/licen%C3%A7a-Apache--2.0-FF7A90">
 </p>
@@ -108,7 +108,7 @@ pip-audit
 
 Os testes de interface rodam sem abrir janelas: `tests/conftest.py` define `QT_QPA_PLATFORM=offscreen`. Ruff, pytest e Bandit também rodam na [integração contínua](.github/workflows/tests.yml); o `pip-audit` consulta bases públicas de vulnerabilidades e precisa de internet.
 
-O relatório de revisão, atualizado na versão 2.0.4 com a auditoria de dependências de outubro de 2026, está em [AUDIT_REPORT.md](AUDIT_REPORT.md). Instruções de empacotamento estão em [BUILDING.md](BUILDING.md).
+O relatório de revisão, atualizado na versão 2.0.5 com a auditoria de dependências de novembro de 2026, está em [AUDIT_REPORT.md](AUDIT_REPORT.md). Instruções de empacotamento estão em [BUILDING.md](BUILDING.md).
 
 ## Estrutura
 
@@ -123,7 +123,7 @@ tests/              testes automatizados
 
 ## Versão
 
-Versão atual: **2.0.4 (build 5)**, de 2 de outubro de 2026. O histórico está em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **2.0.5 (build 6)**, de 16 de novembro de 2026. O histórico está em [CHANGELOG.md](CHANGELOG.md).
 
 ## Licença
 

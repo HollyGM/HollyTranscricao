@@ -20,7 +20,7 @@ from typing import Any
 
 from hollytranscricao.backend.audio_extractor import extract_and_convert_audio
 from hollytranscricao.backend.exporters import render_markdown, write_outputs
-from hollytranscricao.backend.noise_reduction import clean_audio
+from hollytranscricao.backend.noise_reduction import clean_audio, deepfilternet_available
 from hollytranscricao.backend.postprocess import correct_segments
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,8 @@ def run_transcription_pipeline(
         noise_reduction_applied = False
         if apply_noise_reduction:
             if progress_callback:
-                progress_callback("Passo 2/3: Reduzindo ruído (DeepFilterNet/FFmpeg)...")
+                method = "DeepFilterNet" if deepfilternet_available() else "FFmpeg"
+                progress_callback(f"Passo 2/3: Reduzindo ruído ({method})...")
             cleaned_wav_path, noise_reduction_applied = clean_audio(audio_wav_path, temp_dir)
             working_audio_path = cleaned_wav_path
         else:
